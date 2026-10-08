@@ -305,15 +305,39 @@ VideoView::VideoView() {
     };
     this->videoQuality->getParent()->registerClickAction(qualityFunc);
     this->videoQuality->getParent()->addGestureRecognizer(new brls::TapGestureRecognizer(videoQuality->getParent()));
+#ifdef __SWITCH__
+    this->registerAction("wiliwili/player/quality"_i18n, brls::ControllerButton::BUTTON_BACK, qualityFunc);
+#else
     this->registerAction("wiliwili/player/quality"_i18n, brls::ControllerButton::BUTTON_START, qualityFunc);
+#endif
 
-    /// 视频详情信息
+    /// Switch 加号键切换自动/填充，其余平台仍显示视频详情信息
+#ifdef __SWITCH__
+    this->registerAction(
+        "wiliwili/player/setting/aspect/header"_i18n, brls::ControllerButton::BUTTON_START,
+        [this](brls::View*) -> bool {
+            CHECK_OSD(true);
+            const std::string aspect = MPVCore::VIDEO_ASPECT == "-3" ? "-1" : "-3";
+            mpvCore->setAspect(aspect);
+            ProgramConfig::instance().setSettingItem(SettingItem::PLAYER_ASPECT, aspect);
+            this->showHint(aspect == "-3" ? "wiliwili/player/setting/aspect/crop"_i18n
+                                         : "wiliwili/player/setting/aspect/auto"_i18n);
+            return true;
+        },
+        true);
+
+    // 消费 ZL 按键，避免播放器内按住加速时同时切换右侧 Tab。
+    // 按下和松开的状态由 buttonProcessing 处理。
+    this->registerAction("wiliwili/player/speed"_i18n, brls::ControllerButton::BUTTON_LT,
+                         [](brls::View*) -> bool { return true; }, true);
+#else
     auto profileFunc = [this](...) {
         CHECK_OSD(true);
         toggleVideoProfile();
         return true;
     };
     this->registerAction("profile", brls::ControllerButton::BUTTON_BACK, profileFunc, true);
+#endif
 
     /// 倍速按钮
     auto showSpeedFunc = [](...) {
@@ -617,11 +641,29 @@ void VideoView::requestSeeking(int seek, int delay) {
 }
 
 VideoView::~VideoView() {
+#ifdef __SWITCH__
+    this->finishZlSpeedHold();
+#endif
     brls::Logger::debug("trying delete VideoView...");
     this->unRegisterMpvEvent();
     APP_E->unsubscribe(customEventSubscribeID);
     brls::Logger::debug("Delete VideoView done");
 }
+
+#ifdef __SWITCH__
+void VideoView::finishZlSpeedHold() {
+    if (!zlSpeedHeld) return;
+    zlSpeedHeld = false;
+    // 直接排入恢复命令，避免快速松开时 mpv 的异步速度缓存尚未更新。
+    mpvCore->command_async("set", "speed", speedBeforeZl);
+    speedHintBox->setVisibility(brls::Visibility::GONE);
+}
+
+void VideoView::willDisappear(bool resetState) {
+    this->finishZlSpeedHold();
+    brls::Box::willDisappear(resetState);
+}
+#endif
 
 void VideoView::draw(NVGcontext* vg, float x, float y, float width, float height, brls::Style style,
                      brls::FrameContext* ctx) {
@@ -1461,6 +1503,27 @@ void VideoView::buttonProcessing() {
          state.buttons[brls::BUTTON_NAV_UP] || state.buttons[brls::BUTTON_NAV_DOWN])) {
         if (this->osd_state == OSDState::SHOWN) this->showOSD(true);
     }
+#ifdef __SWITCH__
+    // 只在焦点位于播放器内时处理 ZL，评论区和弹出菜单保留自己的按键行为。
+    brls::View* focus = brls::Application::getCurrentFocus();
+    while (focus && focus != this) focus = focus->getParent();
+    const bool zlPressed = state.buttons[brls::BUTTON_LT] && focus == this && !is_osd_lock &&
+                           !isLiveMode && !mpvCore->isStopped();
+    if (zlPressed) {
+        if (!zlSpeedHeld) {
+            speedBeforeZl = mpvCore->getSpeed();
+            zlSpeedHeld   = true;
+            mpvCore->command_async("set", "speed", 3.0);
+            speedHintLabel->setText(wiliwili::format("wiliwili/player/current_speed"_i18n, 3.0f));
+            speedHintBox->setVisibility(brls::Visibility::VISIBLE);
+        }
+        return;
+    }
+    if (zlSpeedHeld) {
+        this->finishZlSpeedHold();
+        return;
+    }
+#endif
     if (is_osd_lock) return;
 
 #ifndef __PSV__

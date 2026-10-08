@@ -49,6 +49,10 @@ public:
 
     ~VideoView() override;
 
+#ifdef __SWITCH__
+    void willDisappear(bool resetState = false) override;
+#endif
+
     /// Video control
     void setUrl(const std::string& url, int start = 0, int end = -1, const std::string& audio = "");
 
@@ -275,6 +279,11 @@ public:
     inline static int OSD_SHOW_TIME = 5000;
 
 private:
+#ifdef __SWITCH__
+    void finishZlSpeedHold();
+    bool zlSpeedHeld = false;
+    double speedBeforeZl = 1.0;
+#endif
     bool allowFullscreen  = true;
     bool registerMPVEvent = false;
     bool enableDanmaku    = true;
