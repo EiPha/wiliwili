@@ -320,8 +320,6 @@ VideoView::VideoView() {
             const std::string aspect = MPVCore::VIDEO_ASPECT == "-3" ? "-1" : "-3";
             mpvCore->setAspect(aspect);
             ProgramConfig::instance().setSettingItem(SettingItem::PLAYER_ASPECT, aspect);
-            this->showHint(aspect == "-3" ? "wiliwili/player/setting/aspect/crop"_i18n
-                                         : "wiliwili/player/setting/aspect/auto"_i18n);
             return true;
         },
         true);
@@ -490,6 +488,10 @@ VideoView::VideoView() {
     this->registerAction("wiliwili/player/fs"_i18n, brls::ControllerButton::BUTTON_A, [this](brls::View* view) {
         CHECK_OSD(false);
         if (this->isFullscreen()) {
+#ifdef __SWITCH__
+            // A 键只控制播放/暂停，保留 Y 键控制的状态栏显示状态。
+            this->togglePlay();
+#else
             this->showOSD(true);
             if (isTvControlMode) {
                 // 焦点设置在默认位置
@@ -498,6 +500,7 @@ VideoView::VideoView() {
                 // 直接切换播放状态
                 this->togglePlay();
             }
+#endif
         } else {
             //非全屏状态点击视频组件进入全屏
             this->setFullScreen(true);
@@ -1615,11 +1618,15 @@ void VideoView::registerMpvEvent() {
                 break;
             case MpvEventEnum::MPV_RESUME:
                 this->showReplay = false;
+#ifndef __SWITCH__
                 this->showOSD(true);
+#endif
                 this->hideLoading();
                 break;
             case MpvEventEnum::MPV_PAUSE:
+#ifndef __SWITCH__
                 this->showOSD(false);
+#endif
                 break;
             case MpvEventEnum::START_FILE:
                 this->showOSD(false);
