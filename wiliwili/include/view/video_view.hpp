@@ -380,7 +380,8 @@ private:
      * @param seek 相对跳转的进度值 单位秒，当值为 0 时取消跳转请求
      * @param delay 请求的延迟触发时间，当值为 0 时立刻跳转
      */
-    void requestSeeking(int seek, int delay = 400);
+    // showOsd 为 false 时保留状态栏显示状态，仅显示跳转提示。
+    void requestSeeking(int seek, int delay = 400, bool showOsd = true);
 
     bool is_seeking     = false;  // 是否正在请求跳转
     int seeking_range   = 0;      // 跳转的目标进度, 跳转结束后归零

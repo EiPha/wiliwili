@@ -85,7 +85,11 @@ VideoView::VideoView() {
     auto rewindFunc = [this](...) -> bool {
         CHECK_OSD(true);
         seeking_range -= getSeekRange(seeking_range);
+#ifdef __SWITCH__
+        this->requestSeeking(seeking_range, 400, false);
+#else
         this->requestSeeking(seeking_range);
+#endif
         return true;
     };
     this->registerAction("\uE08F", brls::ControllerButton::BUTTON_LB, rewindFunc, false, true);
@@ -103,7 +107,11 @@ VideoView::VideoView() {
             } else {
                 seeking_range += getSeekRange(seeking_range);
             }
+#ifdef __SWITCH__
+            this->requestSeeking(seeking_range, 400, false);
+#else
             this->requestSeeking(seeking_range);
+#endif
             return true;
         },
         false, true);
@@ -584,7 +592,7 @@ void VideoView::requestBrightness(float brightness) {
     setCenterHintText(fmt::format("{} %", (int)(brightness * 100)));
 }
 
-void VideoView::requestSeeking(int seek, int delay) {
+void VideoView::requestSeeking(int seek, int delay, bool showOsd) {
     if (getRealDuration() <= 0) {
         seeking_range = 0;
         is_seeking    = false;
@@ -600,7 +608,7 @@ void VideoView::requestSeeking(int seek, int delay) {
         seek     = getRealDuration();
     }
 
-    showOSD(false);
+    if (showOsd) showOSD(false);
     if (osdCenterBox2->getVisibility() != brls::Visibility::VISIBLE) {
         showCenterHint();
         setCenterHintIcon("svg/arrow-left-right.svg");
@@ -625,12 +633,12 @@ void VideoView::requestSeeking(int seek, int delay) {
         is_seeking    = false;
         if (seek == 0) return;
         mpvCore->seekRelative(seek);
-        showOSD(true);
+        if (showOsd) showOSD(true);
     } else {
         // 延迟触发跳转进度
         is_seeking = true;
         ASYNC_RETAIN
-        seeking_iter = brls::delay(delay, [ASYNC_TOKEN, seek]() {
+        seeking_iter = brls::delay(delay, [ASYNC_TOKEN, seek, showOsd]() {
             ASYNC_RELEASE
             this->hideCenterHint();
             this->showThumbnailPreview = false;
@@ -638,7 +646,7 @@ void VideoView::requestSeeking(int seek, int delay) {
             is_seeking    = false;
             if (seek == 0) return;
             mpvCore->seekRelative(seek);
-            showOSD(true);
+            if (showOsd) showOSD(true);
         });
     }
 }
