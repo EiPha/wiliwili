@@ -16,6 +16,30 @@
 
 - - -
 
+## 本 Fork：Switch 自定义按键版
+
+本仓库基于 [xfangfang/wiliwili](https://github.com/xfangfang/wiliwili)，针对 Nintendo Switch 调整了播放器按键。以下按键行为已通过 Switch 真机测试。
+
+| 按键 | 功能 |
+| --- | --- |
+| **`+`** | 在视频比例“自动 / 填充”之间切换，并保存设置；不主动弹出状态栏。 |
+| **`-`** | 打开清晰度选择。 |
+| **A** | 全屏播放时切换暂停 / 恢复播放；不主动弹出状态栏。 |
+| **Y** | 手动显示 / 隐藏状态栏。 |
+| **ZL** | 非直播视频中，按住以 **3 倍速**播放，松开恢复按下前的速度。 |
+
+“填充”会保持视频比例并裁剪边缘以铺满屏幕。切换比例、暂停或恢复播放时，会保留状态栏原本的显示状态。
+
+### 下载与编译
+
+在本仓库的 [GitHub Actions](https://github.com/EiPha/wiliwili/actions/workflows/build.yaml) 中打开最近一次成功的构建，从 **Artifacts** 下载 `wiliwili-NintendoSwitch-…-opengl` 或 `wiliwili-NintendoSwitch-…-deko3d`，解压得到 `wiliwili.nro`。一般使用可先选择 OpenGL 版。
+
+默认仅编译 Switch 的 OpenGL 和 deko3d 两个版本。手动运行 **Build wiliwili → Run workflow** 时，保持 `platform = switch` 即可；需要全部平台时选择 `all`。
+
+以下保留上游项目的介绍与文档。
+
+- - -
+
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/xfangfang/wiliwili)](https://github.com/xfangfang/wiliwili/releases)
 ![GitHub All Releases](https://img.shields.io/github/downloads/xfangfang/wiliwili/total)
 ![GitHub stars](https://img.shields.io/github/stars/xfangfang/wiliwili?style=flat)
@@ -57,7 +81,7 @@ wiliwili 拥有非常接近官方PC客户端的B站浏览体验
 
 ### Nintendo Switch
 
-1. 下载 `wiliwili-NintendoSwitch.zip`：[wiliwili releases](https://github.com/xfangfang/wiliwili/releases)
+1. 下载本 Fork 的自定义按键版：从 [GitHub Actions](https://github.com/EiPha/wiliwili/actions/workflows/build.yaml) 最近一次成功构建的 **Artifacts** 下载 NintendoSwitch 包并解压。上游原版可从 [wiliwili releases](https://github.com/xfangfang/wiliwili/releases) 下载。
 2. 将 wiliwili.nro 放置在**内存卡** `switch` 目录下。
 3. 在主页 `按住` R键打开任意游戏进入 hbmenu，在列表中选择 wiliwili 点击打开即可。
 4. [可选] 在应用内安装桌面图标，入口：设置/实用工具/使用教程
