@@ -5,6 +5,14 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      platform:
+        description: 'Platforms to build'
+        type: choice
+        options:
+          - switch
+          - all
+        default: switch
+        required: true
       ssh_darwin:
         description: 'SSH connection to Darwin'
         required: false
@@ -85,6 +93,7 @@ jobs:
 
 
   release:
+    if: github.event_name == 'workflow_dispatch' && inputs.platform == 'all' && github.event.inputs.release == 'true'
     needs: [ build-win, build-switch, build-macos, build-flatpak, version ]
     runs-on: ubuntu-latest
     steps:
@@ -117,6 +126,7 @@ jobs:
             ${{ needs.version.outputs.DIST_FLATPAK_X86_64 }}/${{ needs.version.outputs.DIST_FLATPAK_X86_64 }}.flatpak
 
   build-win:
+    if: github.event_name == 'workflow_dispatch' && inputs.platform == 'all'
     needs: [ version ]
     strategy:
       fail-fast: false
@@ -303,6 +313,7 @@ jobs:
           path: "cmake-build-switch/wiliwili.nro"
 
   build-ps4:
+    if: github.event_name == 'workflow_dispatch' && inputs.platform == 'all'
     needs: [ version ]
     runs-on: ubuntu-latest
     steps:
@@ -336,6 +347,7 @@ jobs:
           path: "cmake-build-ps4/*.oelf"
 
   build-macos:
+    if: github.event_name == 'workflow_dispatch' && inputs.platform == 'all'
     needs: [ version ]
     runs-on: macos-14
     strategy:
@@ -415,6 +427,7 @@ jobs:
           path: "${{ steps.name.outputs.DMG }}.dmg"
 
   build-flatpak:
+    if: github.event_name == 'workflow_dispatch' && inputs.platform == 'all'
     needs: [ version ]
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
@@ -479,6 +492,7 @@ jobs:
           if-no-files-found: error
 
   build-vita:
+    if: github.event_name == 'workflow_dispatch' && inputs.platform == 'all'
     needs: [ version ]
     name: build-psv
     runs-on: ubuntu-latest

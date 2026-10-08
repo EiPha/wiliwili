@@ -2,7 +2,7 @@ name: Build l4t
 
 on:
   push:
-    branches: ["yoga", "l4t"]
+    branches: ["l4t"]
 
   workflow_dispatch:
 
@@ -28,4 +28,3 @@ jobs:
         with:
           name: wiliwili-Linux-${{ matrix.release }}
           path: wiliwili-*.deb
-
